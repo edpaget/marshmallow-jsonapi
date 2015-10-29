@@ -191,7 +191,8 @@ class Schema(ma.Schema):
             elif isinstance(self.fields[field_name], BaseRelationship):
                 if 'relationships' not in ret:
                     ret['relationships'] = self.dict_class()
-                ret['relationships'].update(value)
+                key, value = value.popitem()
+                ret['relationships'][self.inflect(key)] = value
             else:
                 if 'attributes' not in ret:
                     ret['attributes'] = self.dict_class()
