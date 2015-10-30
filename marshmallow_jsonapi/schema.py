@@ -97,6 +97,7 @@ class Schema(ma.Schema):
 
     @ma.pre_load(pass_many=True)
     def unwrap_request(self, data, many):
+        print(data)
         if 'data' not in data:
             raise ma.ValidationError('Object must include `data` key.')
         data = data['data']
