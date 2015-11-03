@@ -88,14 +88,16 @@ class Relationship(BaseRelationship):
         if self.many:
             included_data = [
                 {'type': self.type_,
-                    'id': get_value_or_raise(self.id_field, each)}
+                 'id': get_value_or_raise(self.id_field, each)}
                 for each in value
             ]
-        else:
+        elif not value is None:
             included_data = {
                 'type': self.type_,
                 'id': get_value_or_raise(self.id_field, value)
             }
+        else:
+            included_data = {}
         return included_data
 
     def _serialize(self, value, attr, obj):
@@ -106,7 +108,7 @@ class Relationship(BaseRelationship):
         self_url = self.get_self_url(obj)
         if self_url:
             ret[attr]['links']['self'] = self_url
-        related_url = self.get_related_url(obj)
+            related_url = self.get_related_url(obj)
         if related_url:
             ret[attr]['links']['related'] = related_url
         if self.include_data:
