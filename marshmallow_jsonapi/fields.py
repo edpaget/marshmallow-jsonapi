@@ -88,13 +88,13 @@ class Relationship(BaseRelationship):
         if self.many:
             included_data = [
                 {'type': self.type_,
-                 'id': get_value_or_raise(self.id_field, each)}
+                 'id': str(get_value_or_raise(self.id_field, each))}
                 for each in value
             ]
         elif not value is None:
             included_data = {
                 'type': self.type_,
-                'id': get_value_or_raise(self.id_field, value)
+                'id': str(get_value_or_raise(self.id_field, value))
             }
         else:
             included_data = {}
