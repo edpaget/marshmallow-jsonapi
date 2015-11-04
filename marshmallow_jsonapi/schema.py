@@ -93,11 +93,12 @@ class Schema(ma.Schema):
             raise IncorrectTypeError(actual=item['type'], expected=self.opts.type_)
         if 'attributes' not in item:
             raise ma.ValidationError('`data` object must include `attributes` key.')
-        return item['attributes']
+        attrs = item['attributes'].copy()
+        attrs.update(item.get('relationships', {}))
+        return attrs
 
     @ma.pre_load(pass_many=True)
     def unwrap_request(self, data, many):
-        print(data)
         if 'data' not in data:
             raise ma.ValidationError('Object must include `data` key.')
         data = data['data']
