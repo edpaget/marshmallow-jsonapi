@@ -57,7 +57,8 @@ class Relationship(BaseRelationship):
         self,
         related_url='', related_url_kwargs=None,
         self_url='', self_url_kwargs=None,
-        include_data=False, many=False, type_=None, id_field=None, **kwargs
+        include_data=False, many=False, type_=None, id_field=None,
+        type_schema=None, **kwargs
     ):
         self.related_url = related_url
         self.related_url_kwargs = related_url_kwargs or {}
@@ -69,8 +70,13 @@ class Relationship(BaseRelationship):
         self.include_data = include_data
         self.type_ = type_
         self.id_field = id_field or self.id_field
+        self._type_schema = type_schema
         super(Relationship, self).__init__(**kwargs)
         #self.dump_only = kwargs.pop('dump_only', True)
+
+    @property
+    def type_schema(self):
+        return self._type_schema()
 
     def get_related_url(self, obj):
         if self.related_url:
@@ -108,7 +114,7 @@ class Relationship(BaseRelationship):
         self_url = self.get_self_url(obj)
         if self_url:
             ret[attr]['links']['self'] = self_url
-            related_url = self.get_related_url(obj)
+        related_url = self.get_related_url(obj)
         if related_url:
             ret[attr]['links']['related'] = related_url
         if self.include_data:
