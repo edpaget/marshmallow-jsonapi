@@ -10,8 +10,9 @@ build_dir = os.path.join(docs_dir, '_build')
 
 @task
 def test():
-    flake()
+    #flake()
     import pytest
+    print(pytest)
     errcode = pytest.main(['tests'])
     sys.exit(errcode)
 

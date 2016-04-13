@@ -37,6 +37,12 @@ class PostSchema(Schema):
     class Meta:
         type_ = 'posts'
 
+class CommentSchema(Schema):
+    id = fields.Str(dump_only=True)
+    body = fields.Str()
+
+    class Meta:
+        type_ = 'comments'
 
 def test_type_is_required():
     class BadSchema(Schema):
@@ -367,16 +373,20 @@ class ArticleSchema(Schema):
     id = fields.Integer()
     body = fields.String()
     author = fields.Relationship(
-        dump_only=False, include_data=True, many=False, type_='people')
+        dump_only=False, include_data=True, many=False, type_='people', schema=AuthorSchema)
     comments = fields.Relationship(
-        dump_only=False, include_data=True, many=True, type_='comments')
+        dump_only=False, include_data=True, many=True, type_='comments', schema=CommentSchema)
 
     class Meta:
         type_ = 'articles'
 
+class TestCompoundDocuments(object):
+    def test_loading_compound_document(self, article, author):
+        data = ArticleSchema(include='author,comments').dump(article).data
+        print(data['included'])
+        assert [d['type'] for d in data['included']] == ['people', 'comments', 'comments']
 
 class TestRelationshipLoading(object):
-
     article = {
         'data': {
             "id": "1",

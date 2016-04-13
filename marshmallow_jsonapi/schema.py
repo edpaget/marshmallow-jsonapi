@@ -8,6 +8,8 @@ from .fields import BaseRelationship
 from .exceptions import IncorrectTypeError
 from .utils import resolve_params
 
+from itertools import chain
+
 TYPE = 'type'
 ID = 'id'
 
@@ -75,7 +77,8 @@ class Schema(ma.Schema):
         """
         pass
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, include='', **kwargs):
+        self.include = include
         super(Schema, self).__init__(*args, **kwargs)
 
         if not self.opts.type_:
@@ -90,14 +93,18 @@ class Schema(ma.Schema):
 
     OPTIONS_CLASS = SchemaOpts
 
-    @ma.post_dump(pass_many=True)
-    def format_json_api_response(self, data, many):
+    @ma.post_dump(pass_many=True, pass_original=True)
+    def format_json_api_response(self, data, many, original_data):
         """Post-dump hoook that formats serialized data as a top-level JSON API object.
 
         See: http://jsonapi.org/format/#document-top-level
         """
+        if self.include:
+            included = self.load_included(original_data, self.include, many)
+        else:
+            included = None
         ret = self.format_items(data, many)
-        ret = self.wrap_response(ret, many)
+        ret = self.wrap_response(ret, included, many)
         return ret
 
     def unwrap_item(self, item):
@@ -273,10 +280,28 @@ class Schema(ma.Schema):
             return ret
         return None
 
-    def wrap_response(self, data, many):
+    def wrap_response(self, data, included, many):
         """Wrap data and links according to the JSON API """
         ret = {'data': data}
+        if included:
+            ret['included'] = included
         top_level_links = self.get_top_level_links(data, many)
         if top_level_links:
             ret['links'] = top_level_links
         return ret
+
+    def _load_included(self, data, include):
+        included = []
+        for i in include.split(','):
+            out = self.fields[i].serialize_included(i, data)
+            if isinstance(out, list):
+                included = included + out
+            else:
+                included.append(out)
+        return included
+
+    def load_included(self, data, include, many):
+        if many:
+            return [self._load_included(datum, include) for datum in data]
+        else:
+            return self._load_included(data, include)

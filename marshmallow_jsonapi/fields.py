@@ -62,7 +62,7 @@ class Relationship(BaseRelationship):
     def __init__(
         self,
         related_url='', related_url_kwargs=None,
-        self_url='', self_url_kwargs=None,
+        self_url='', self_url_kwargs=None, schema=None,
         include_data=False, many=False, type_=None, id_field=None, **kwargs
     ):
         self.related_url = related_url
@@ -74,6 +74,7 @@ class Relationship(BaseRelationship):
         self.many = many
         self.include_data = include_data
         self.type_ = type_
+        self.schema = schema
         self.id_field = id_field or self.id_field
         super(Relationship, self).__init__(**kwargs)
 
@@ -109,6 +110,7 @@ class Relationship(BaseRelationship):
 
     def extract_value(self, data):
         """Extract the id key and validate the request structure."""
+
         errors = []
         if 'id' not in data:
             errors.append('Must have an `id` field')
@@ -162,3 +164,8 @@ class Relationship(BaseRelationship):
             else:
                 ret['data'] = self.add_resource_linkage(value)
         return ret
+
+    def serialize_included(self, attr, obj, accessor=None):
+        return self.schema(many=self.many).dump(self.get_value(attr, obj, accessor=accessor)).\
+            data['data']
+

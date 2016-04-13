@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from tests.base import Author, Post, Comment, fake
+from tests.base import Author, Post, Comment, fake, Article
 
 def make_author():
     return Author(id=fake.random_int(), first_name=fake.first_name(),
@@ -19,6 +19,19 @@ def make_post(with_comments=True, with_author=True):
 
 def make_comment():
     return Comment(id=fake.random_int(), body=fake.bs())
+
+def make_article():
+    comments = [make_comment() for _ in range(2)]
+    author = make_author()
+    return Article(id=fake.random_int(),
+                   body=fake.bs(),
+                   author=author,
+                   author_id=author.id,
+                   comments=comments)
+
+@pytest.fixture()
+def article():
+    return make_article()
 
 @pytest.fixture()
 def author():
