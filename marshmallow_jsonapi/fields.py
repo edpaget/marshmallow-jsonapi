@@ -174,10 +174,6 @@ class Relationship(BaseRelationship):
 
     @property
     def schema(self):
-        """The nested Schema object.
-        .. versionchanged:: 1.0.0
-            Renamed from `serializer` to `schema`
-        """
         # Inherit context from parent.
         context = getattr(self.parent, 'context', {})
         if not self.__schema:

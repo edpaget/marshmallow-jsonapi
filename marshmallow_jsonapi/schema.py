@@ -293,8 +293,9 @@ class Schema(ma.Schema):
     def _load_included(self, data, include):
         included = []
         for i in include.split(','):
-            out = self.fields[i].serialize_included(i, data)
-            if isinstance(out, list):
+            field = self.fields[i]
+            out = field.serialize_included(i, data)
+            if field.many:
                 included = included + out
             else:
                 included.append(out)
@@ -302,6 +303,9 @@ class Schema(ma.Schema):
 
     def load_included(self, data, include, many):
         if many:
-            return [self._load_included(datum, include) for datum in data]
+            included = []
+            for datum in data:
+                included = included + self._load_included(datum, include)
+            return included
         else:
             return self._load_included(data, include)

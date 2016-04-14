@@ -381,10 +381,14 @@ class ArticleSchema(Schema):
         type_ = 'articles'
 
 class TestCompoundDocuments(object):
-    def test_loading_compound_document(self, article, author):
+    def test_loading_compound_document(self, article):
         data = ArticleSchema(include='author,comments').dump(article).data
-        print(data['included'])
         assert [d['type'] for d in data['included']] == ['people', 'comments', 'comments']
+
+    def test_loading_only_many_relationship(self, article):
+        data = ArticleSchema(include='comments').dump(article).data
+        assert [d['type'] for d in data['included']] == ['comments', 'comments']
+
 
 class TestRelationshipLoading(object):
     article = {
