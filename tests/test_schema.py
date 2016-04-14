@@ -375,7 +375,7 @@ class ArticleSchema(Schema):
     author = fields.Relationship(
         dump_only=False, include_data=True, many=False, type_='people', schema=AuthorSchema)
     comments = fields.Relationship(
-        dump_only=False, include_data=True, many=True, type_='comments', schema=CommentSchema)
+        dump_only=False, include_data=True, many=True, type_='comments', schema='CommentSchema')
 
     class Meta:
         type_ = 'articles'

@@ -2,10 +2,12 @@
 """Includes all the fields classes from `marshmallow.fields` as well as
 fields for serializing JSON API-formatted hyperlinks.
 """
-from marshmallow import ValidationError
+from marshmallow import ValidationError, class_registry
 # Make core fields importable from marshmallow_jsonapi
 from marshmallow.fields import *  # noqa
 from marshmallow.utils import get_value, is_collection
+from marshmallow.base import FieldABC, SchemaABC
+from marshmallow.compat import text_type, basestring
 
 from .utils import resolve_params
 
@@ -74,7 +76,8 @@ class Relationship(BaseRelationship):
         self.many = many
         self.include_data = include_data
         self.type_ = type_
-        self.schema = schema
+        self.included = schema
+        self.__schema = None
         self.id_field = id_field or self.id_field
         super(Relationship, self).__init__(**kwargs)
 
@@ -166,6 +169,31 @@ class Relationship(BaseRelationship):
         return ret
 
     def serialize_included(self, attr, obj, accessor=None):
-        return self.schema(many=self.many).dump(self.get_value(attr, obj, accessor=accessor)).\
+        return self.schema.dump(self.get_value(attr, obj, accessor=accessor)).\
             data['data']
 
+    @property
+    def schema(self):
+        """The nested Schema object.
+        .. versionchanged:: 1.0.0
+            Renamed from `serializer` to `schema`
+        """
+        # Inherit context from parent.
+        context = getattr(self.parent, 'context', {})
+        if not self.__schema:
+            if isinstance(self.included, SchemaABC):
+                self.__schema = self.included
+                self.__schema.context.update(context)
+            elif isinstance(self.included, type) and \
+                 issubclass(self.included, SchemaABC):
+                self.__schema = self.included(many=self.many,
+                                              context=context)
+            elif isinstance(self.included, basestring):
+                schema_class = class_registry.get_class(self.included)
+                self.__schema = schema_class(many=self.many,
+                                             context=context)
+            else:
+                raise ValueError('Nested fields must be passed a '
+                                 'Schema, not {0}.'.format(self.included.__class__))
+        self.__schema.ordered = getattr(self.parent, 'ordered', False)
+        return self.__schema
