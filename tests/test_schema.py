@@ -375,7 +375,7 @@ class ArticleSchema(Schema):
     author = fields.Relationship(
         dump_only=False, include_data=True, many=False, type_='people', schema=AuthorSchema)
     comments = fields.Relationship(
-        dump_only=False, include_data=True, many=True, type_='comments', schema='CommentSchema')
+        dump_only=False, include_data=False, many=True, type_='comments', schema='CommentSchema')
 
     class Meta:
         type_ = 'articles'
@@ -388,6 +388,12 @@ class TestCompoundDocuments(object):
     def test_loading_only_many_relationship(self, article):
         data = ArticleSchema(include='comments').dump(article).data
         assert [d['type'] for d in data['included']] == ['comments', 'comments']
+
+    def test_include_data_when_including_relationship(self, article):
+        data = ArticleSchema().dump(article).data
+        assert not data['data']['relationships']['comments'].get('data', None)
+        data = ArticleSchema(include='comments').dump(article).data
+        assert data['data']['relationships']['comments']['data']
 
 
 class TestRelationshipLoading(object):

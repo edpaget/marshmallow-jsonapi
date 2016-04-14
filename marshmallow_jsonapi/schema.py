@@ -8,8 +8,6 @@ from .fields import BaseRelationship
 from .exceptions import IncorrectTypeError
 from .utils import resolve_params
 
-from itertools import chain
-
 TYPE = 'type'
 ID = 'id'
 

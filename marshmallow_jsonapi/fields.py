@@ -161,7 +161,7 @@ class Relationship(BaseRelationship):
             if related_url:
                 ret['links']['related'] = related_url
 
-        if self.include_data:
+        if self.name in getattr(self.parent, 'include', '').split(',') or self.include_data:
             if value is None:
                 ret['data'] = [] if self.many else None
             else:
