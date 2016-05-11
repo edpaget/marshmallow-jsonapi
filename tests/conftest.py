@@ -17,8 +17,9 @@ def make_post(with_comments=True, with_author=True):
         author_id=author.id if with_author else None,
         comments=comments)
 
-def make_comment():
-    return Comment(id=fake.random_int(), body=fake.bs())
+def make_comment(with_author=True):
+    author = make_author() if with_author else None
+    return Comment(id=fake.random_int(), body=fake.bs(), author=author)
 
 def make_article():
     comments = [make_comment() for _ in range(2)]

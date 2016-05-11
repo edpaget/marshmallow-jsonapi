@@ -168,28 +168,24 @@ class Relationship(BaseRelationship):
                 ret['data'] = self.add_resource_linkage(value)
         return ret
 
-    def serialize_included(self, attr, obj, accessor=None):
-        return self.schema.dump(self.get_value(attr, obj, accessor=accessor)).\
-            data['data']
+    def serialize_included(self, attr, obj, children, accessor=None):
+        context = getattr(self.parent, 'context', {})
+        schema = self.schema(
+            many=self.many,
+            context=context,
+            include=children
+        )
+        schema.ordered = getattr(self.parent, 'ordered', False)
+        dump = schema.dump(self.get_value(attr, obj, accessor=accessor))
+        return [dump.data['data'], dump.data.get('included', [])]
 
     @property
     def schema(self):
         # Inherit context from parent.
-        context = getattr(self.parent, 'context', {})
         if not self.__schema:
-            if isinstance(self.included, SchemaABC):
+            if isinstance(self.included, type) and \
+               issubclass(self.included, SchemaABC):
                 self.__schema = self.included
-                self.__schema.context.update(context)
-            elif isinstance(self.included, type) and \
-                 issubclass(self.included, SchemaABC):
-                self.__schema = self.included(many=self.many,
-                                              context=context)
-            elif isinstance(self.included, basestring):
-                schema_class = class_registry.get_class(self.included)
-                self.__schema = schema_class(many=self.many,
-                                             context=context)
             else:
-                raise ValueError('Nested fields must be passed a '
-                                 'Schema, not {0}.'.format(self.included.__class__))
-        self.__schema.ordered = getattr(self.parent, 'ordered', False)
+                self.__schema = class_registry.get_class(self.included)
         return self.__schema

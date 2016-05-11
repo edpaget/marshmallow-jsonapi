@@ -41,6 +41,9 @@ class CommentSchema(Schema):
     id = fields.Str(dump_only=True)
     body = fields.Str()
 
+    author = fields.Relationship(
+        dump_only=False, include_data=True, many=False, type_='people', schema=AuthorSchema)
+
     class Meta:
         type_ = 'comments'
 
@@ -380,6 +383,7 @@ class ArticleSchema(Schema):
     class Meta:
         type_ = 'articles'
 
+
 class TestCompoundDocuments(object):
     def test_loading_compound_document(self, article):
         data = ArticleSchema(include='author,comments').dump(article).data
@@ -394,6 +398,10 @@ class TestCompoundDocuments(object):
         assert not data['data']['relationships']['comments'].get('data', None)
         data = ArticleSchema(include='comments').dump(article).data
         assert data['data']['relationships']['comments']['data']
+
+    def test_include_compound_docs_with_sub_docs(self, article):
+        data = ArticleSchema(include='comments,comments.author').dump(article).data
+        assert [d['type'] for d in data['included']] == ['people', 'people', 'comments', 'comments']
 
 
 class TestRelationshipLoading(object):

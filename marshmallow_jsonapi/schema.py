@@ -290,9 +290,24 @@ class Schema(ma.Schema):
 
     def _load_included(self, data, include):
         included = []
+        includes = {}
         for i in include.split(','):
+            key, *children = i.split('.')
+            children = '.'.join(children)
+            if includes.get(key) is None:
+                includes[key] = children
+            elif includes.get(key) is '':
+                includes[key] = children
+            else:
+                includes[key] += "," + children
+
+        for i, children in includes.items():
             field = self.fields[i]
-            out = field.serialize_included(i, data)
+            out, children_included = field.serialize_included(i, data, children)
+
+            if children_included:
+                included = included + children_included
+
             if field.many:
                 included = included + out
             else:
