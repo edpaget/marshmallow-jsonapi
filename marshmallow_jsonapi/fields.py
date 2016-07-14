@@ -8,6 +8,8 @@ from marshmallow.fields import *  # noqa
 from marshmallow.utils import get_value, is_collection
 from marshmallow.base import FieldABC, SchemaABC
 from marshmallow.compat import text_type, basestring
+from marshmallow.utils import missing as missing_
+
 
 from .utils import resolve_params
 
@@ -80,6 +82,13 @@ class Relationship(BaseRelationship):
         self.__schema = None
         self.id_field = id_field or self.id_field
         super(Relationship, self).__init__(**kwargs)
+
+    def get_value(self, attr, obj, accessor=None, default=missing_):
+        if self.name in getattr(self.parent, 'include', '').split(',') or self.include_data:
+            attribute = getattr(self, 'attribute', None)
+            accessor_func = accessor or get_value
+            check_key = attr if attribute is None else attribute
+            return accessor_func(check_key, obj, default)
 
     def get_related_url(self, obj):
         if self.related_url:
@@ -176,8 +185,12 @@ class Relationship(BaseRelationship):
             include=children
         )
         schema.ordered = getattr(self.parent, 'ordered', False)
-        dump = schema.dump(self.get_value(attr, obj, accessor=accessor))
-        return [dump.data['data'], dump.data.get('included', [])]
+        val = self.get_value(attr, obj, accessor=accessor)
+        if val:
+            dump = schema.dump(val)
+            return [dump.data['data'], dump.data.get('included', [])]
+        else:
+            return [{}, []]
 
     @property
     def schema(self):
