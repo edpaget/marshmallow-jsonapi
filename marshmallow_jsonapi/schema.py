@@ -308,9 +308,9 @@ class Schema(ma.Schema):
             if children_included:
                 included = included + children_included
 
-            if field.many:
+            if field.many and out:
                 included = included + out
-            else:
+            elif out:
                 included.append(out)
         return included
 
