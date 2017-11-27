@@ -10,7 +10,7 @@ from marshmallow import ValidationError, class_registry
 # Make core fields importable from marshmallow_jsonapi
 from marshmallow.fields import *  # noqa
 from marshmallow.base import SchemaABC
-from marshmallow.utils import is_collection
+from marshmallow.utils import is_collection, missing
 
 from .utils import get_value, resolve_params, iteritems, _MARSHMALLOW_VERSION_INFO
 
@@ -98,6 +98,16 @@ class Relationship(BaseRelationship):
         self.type_ = type_
         self.id_field = id_field or self.id_field
         super(Relationship, self).__init__(**kwargs)
+
+    def get_value(self, obj, attr, accessor=None, default=missing):
+        """Return the value for a given key from an object."""
+        # NOTE: Use getattr instead of direct attribute access here so that
+        # subclasses aren't required to define `attribute` member
+        if self.include_resource_linkage:
+            attribute = getattr(self, 'attribute', None)
+            accessor_func = accessor or utils.get_value
+            check_key = attr if attribute is None else attribute
+            return accessor_func(obj, check_key, default)
 
     @property
     def schema(self):
